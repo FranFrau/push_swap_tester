@@ -6,7 +6,7 @@
 #    By: ffrau <ffrau@student.42.fr>                +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2022/06/11 19:52:02 by ffrau             #+#    #+#              #
-#    Updated: 2022/06/12 18:20:11 by ffrau            ###   ########.fr        #
+#    Updated: 2022/06/14 13:28:21 by ffrau            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -18,12 +18,14 @@ CURR_PATH=$(pwd)
 PUSH_SWAP="${CURR_PATH}/../push_swap"
 CHECKER="${CURR_PATH}/../checker"
 CHECKER_MAC="${CURR_PATH}/../checker_Mac"
-#dirname "$0"
+ERROR_FILE="errors.txt"
 
 three_number(){
 	COUNTER=0
 	RESULT=0
 	AVERAGE=0
+	MIN=999999999999
+	MAX=-999999999999
 	for (( i=0; i<3; i++))
 	do
 		for (( j=0; j<3; j++))
@@ -32,6 +34,12 @@ three_number(){
 			do
 				if [[ ! ${i} == ${j} ]] && [[ ! ${i} == ${k} ]] && [[ ! ${k} == ${j} ]]; then
 					RESULT=$(${PUSH_SWAP} ${i} ${j} ${k} | wc -l)
+					if [ ${RESULT} -le ${MIN} ]; then
+						MIN=${RESULT}
+					fi
+					if [ ${RESULT} -ge ${MAX} ]; then
+						MAX=${RESULT}
+					fi
 					AVERAGE=$((AVERAGE + RESULT))
 					if [ $RESULT -le  3 ]; then
 						COUNTER=$((COUNTER +1))
@@ -42,13 +50,15 @@ three_number(){
 			done
 		done
 	done
-	printf "${LGREEN}3${NC}	Numbers: You made ${LGREEN}${COUNTER}/6${NC}.		Average of ${LGREEN}$((AVERAGE / 6))${NC}\n"
+	printf "${LGREEN}3${NC}	Numbers: You made ${LGREEN}${COUNTER}/6${NC}.		Average of ${LGREEN}$((AVERAGE / 6))	${NC}${LGREEN}[${MIN}]${RED}[${MAX}]${NC}\n"
 }
 
 five_number(){
 	COUNTER=0
 	RESULT=0
 	AVERAGE=0
+	MIN=999999999999
+	MAX=-999999999999
 	for (( i=0; i<5; i++))
 	do
 		for (( j=0; j<5; j++))
@@ -61,6 +71,12 @@ five_number(){
 					do
 						if [[ ! ${i} == ${j} ]] && [[ ! ${i} == ${k} ]] && [[ ! ${i} == ${x} ]] && [[ ! ${i} == ${y} ]]&& [[ ! ${j} == ${k} ]] && [[ ! ${j} == ${x} ]] && [[ ! ${j} == ${y} ]] && [[ ! ${k} == ${x} ]] && [[ ! ${k} == ${y} ]] && [[ ! ${x} == ${y} ]]; then
 							RESULT=$(${PUSH_SWAP} ${i} ${j} ${k} ${x} ${y} | wc -l)
+							if [ ${RESULT} -le ${MIN} ]; then
+								MIN=${RESULT}
+							fi
+							if [ ${RESULT} -ge ${MAX} ]; then
+								MAX=${RESULT}
+							fi
 							AVERAGE=$((AVERAGE + RESULT))
 							if [ $RESULT -le  12 ]; then
 								COUNTER=$((COUNTER +1))
@@ -73,7 +89,7 @@ five_number(){
 			done
 		done
 	done
-	printf "${LGREEN}5${NC}	Numbers: You made ${LGREEN}${COUNTER}/120${NC}.	Average of ${LGREEN}$((AVERAGE / 120))${NC}\n"
+	printf "${LGREEN}5${NC}	Numbers: You made ${LGREEN}${COUNTER}/120${NC}.	Average of ${LGREEN}$((AVERAGE / 120))	${NC}${LGREEN}[${MIN}]${RED}[${MAX}]${NC}\n"
 }
 
 one_hundred(){
@@ -81,6 +97,8 @@ one_hundred(){
 	AVERAGE=0
 	MOVES=$1
 	TESTS=$2
+	MIN=999999999999
+	MAX=-999999999999
 	if [ ! $1 ] || [ $1 == "default" ]; then
 		MOVES=700
 	fi
@@ -91,17 +109,24 @@ one_hundred(){
 	do
 		SEQUENCE="$(ruby -e "puts (-50..48).to_a.shuffle.join(' ')")"
 		RESULT=$(${PUSH_SWAP} ${SEQUENCE} | wc -l)
+		if [ ${RESULT} -le ${MIN} ]; then
+			MIN=${RESULT}
+		fi
+		if [ ${RESULT} -ge ${MAX} ]; then
+			MAX=${RESULT}
+		fi
 		AVERAGE=$((AVERAGE + RESULT))
 		if [ ${RESULT} -le ${MOVES} ]; then
 			COUNTER=$((COUNTER +1))
 		else
 			printf "${RED}Error${NC}\n"
-			echo "'./push_swap ${SEQUENCE}'" >> errors.txt
+			echo "'./push_swap ${SEQUENCE}'" >> ${ERROR_FILE}
+			printf "Moves: ${RED}${RESULT}${NC}\n" >> ${ERROR_FILE}
 		fi
 	done
-	printf "${LGREEN}100${NC}	Numbers: You made ${LGREEN}${COUNTER}/${TESTS}${NC}.	Average of ${LGREEN}$((AVERAGE / ${TESTS}))${NC}\n"
+	printf "${LGREEN}100${NC}	Numbers: You made ${LGREEN}${COUNTER}/${TESTS}${NC}.	Average of ${LGREEN}$((AVERAGE / ${TESTS}))	${NC}${LGREEN}[${MIN}]${RED}[${MAX}]${NC}\n"
 	if [ ! ${COUNTER} == ${TESTS} ]; then
-		printf "You can find the errors in errors.txxt file. You can also read it with ./tester showerrors\n"
+		printf "You can read the errors with ./tester showerrors\n"
 	fi
 }
 
@@ -110,6 +135,8 @@ five_hundred(){
 	AVERAGE=0
 	MOVES=$1
 	TESTS=$2
+	MIN=999999999999
+	MAX=-999999999999
 	if [ ! $1 ] || [ $1 == "default" ]; then
 		MOVES=5500
 	fi
@@ -120,23 +147,30 @@ five_hundred(){
 	do
 		SEQUENCE="$(ruby -e "puts (-249..250).to_a.shuffle.join(' ')")"
 		RESULT=$(${PUSH_SWAP} ${SEQUENCE} | wc -l)
+		if [ ${RESULT} -le ${MIN} ]; then
+			MIN=${RESULT}
+		fi
+		if [ ${RESULT} -ge ${MAX} ]; then
+			MAX=${RESULT}
+		fi
 		AVERAGE=$((AVERAGE + RESULT))
 		if [ ${RESULT} -le ${MOVES} ]; then
 			COUNTER=$((COUNTER +1))
 		else
 			printf "${RED}Error${NC}\n"
-			echo "'./push_swap ${SEQUENCE}'" >> errors.txt
+			echo "'./push_swap ${SEQUENCE}'" >> ${ERROR_FILE}
+			printf "Moves: ${RED}${RESULT}${NC}\n" >> ${ERROR_FILE}
 		fi
 	done
-	printf "${LGREEN}500${NC}	Numbers: You made ${LGREEN}${COUNTER}/${TESTS}${NC}.	Average of ${LGREEN}$((AVERAGE / ${TESTS}))${NC}\n"
+	printf "${LGREEN}500${NC}	Numbers: You made ${LGREEN}${COUNTER}/${TESTS}${NC}.	Average of ${LGREEN}$((AVERAGE / ${TESTS}))	${NC}${LGREEN}[${MIN}]${RED}[${MAX}]${NC}\n"
 	if [ ! ${COUNTER} == ${TESTS} ]; then
-		printf "You can find the errors in errors.txxt file. You can also read it with ./tester showerrors\n"
+		printf "You can read the errors with ./tester showerrors\n"
 	fi
 }
 
 showerrors(){
-	if [ -f ./errors.txt ]; then
-		cat ./errors.txt
+	if [ -f ./${ERROR_FILE} ]; then
+		cat ./${ERROR_FILE}
 	else
 		printf "${LGREEN}No errors to show${NC}\n"
 	fi
@@ -366,6 +400,9 @@ norme()
 valid_params()
 {
 	if [ ! $1 ]; then
+		if [ -f ${ERROR_FILE} ]; then
+			rm -rf ${ERROR_FILE}
+		fi
 		makefile_checker
 		norme
 		stderr_validator
@@ -375,7 +412,6 @@ valid_params()
 		five_number
 		one_hundred
 		five_hundred
-		showerrors
 	else
 		case $1 in
 			"makefile")
