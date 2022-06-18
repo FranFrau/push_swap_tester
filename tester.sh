@@ -6,7 +6,7 @@
 #    By: ffrau <ffrau@student.42.fr>                +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2022/06/11 19:52:02 by ffrau             #+#    #+#              #
-#    Updated: 2022/06/16 11:27:51 by ffrau            ###   ########.fr        #
+#    Updated: 2022/06/18 13:37:07 by ffrau            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -21,6 +21,7 @@ PUSH_SWAP="${CURR_PATH}/../push_swap"
 CHECKER="${CURR_PATH}/../checker"
 CHECKER_MAC="${CURR_PATH}/../checker_Mac"
 ERROR_FILE="errors.txt"
+FD_ERROR_FILE="fd_errors.txt"
 OUTPUT_FILE="output.txt"
 
 print_message()
@@ -41,9 +42,9 @@ print_message()
 		printf "${RED}${COUNTER}${LGREEN}/$3${NC}"
 	fi
 	if [ $1 == 3 ]; then
-		printf "     Average of "
+		printf "	Average of "
 	else
-		printf " Average of "
+		printf "	Average of "
 	fi
 	if [ $(($4 / $3)) -gt $7 ]; then
 		printf "${RED}$(($4 / $3))${NC}	|"
@@ -120,7 +121,7 @@ five_number(){
 								MAX=${RESULT}
 							fi
 							AVERAGE=$((AVERAGE + RESULT))
-							if [ $RESULT -le  12 ]; then
+							if [ $RESULT -le 12 ]; then
 								COUNTER=$((COUNTER +1))
 							else
 								printf "${RED}Error with ${NC}'${PUSH_SWAP} ${i} ${j} ${k} ${x} ${y}'\n" >> ${ERROR_FILE}
@@ -210,6 +211,26 @@ showerrors(){
 	fi
 }
 
+checker_test()
+{
+	# echo "$1 || $2"
+	# echo "ARG || CHECKER_USE"
+	if [ $2 == 1 ]; then
+		OUTPUT_CHECKER=$(${PUSH_SWAP} $1 2> ${FD_ERROR_FILE} | ${CHECKER} $1 2> ${FD_ERROR_FILE})
+	fi
+	OUTPUT_CHECKER_MAC=$(${PUSH_SWAP} $1 2> ${FD_ERROR_FILE} | ${CHECKER_MAC} $1)
+	if [ $2 == 0 ] && [ ${OUTPUT_CHECKER_MAC} == "KO" ]; then
+		printf "${RED}Checker	test. Error with $1 ❌${NC}\n"
+		printf "./push_swap $1\n" >> ${ERROR_FILE}
+		return 1
+	elif [ $2 == 1 ] && [ ! ${OUTPUT_CHECKER} == ${OUTPUT_CHECKER_MAC} ]; then
+		printf "${RED}Checker	test. Intra checker and your checker output are differents. Error with $1 ❌${NC}\n"
+		printf "./push_swap $1\n" >> ${ERROR_FILE}
+		return 1
+	fi
+	return 0
+}
+
 stresstests()
 {
 	SHOW_ERROR=0
@@ -220,61 +241,28 @@ stresstests()
 		CHECKER_USE=1
 	fi
 
-	ARG="2 1 0"
-	if [ ${CHECKER_USE} == 1 ]; then
-		OUTPUT_CHECKER=$(${PUSH_SWAP} ${ARG} | ${CHECKER} ${ARG})
-	fi
-	OUTPUT_CHECKER_MAC=$(${PUSH_SWAP} ${ARG} | ${CHECKER_MAC} ${ARG})
-	if [ ${CHECKER_USE} == 0 ] && [ ${OUTPUT_CHECKER_MAC} == "KO" ]; then
+	checker_test "2 1 0" ${CHECKER_USE}
+	RES=$?
+	if [ ${SHOW_ERROR} == 0 ] && [ ! ${RES} == 0 ]; then
 		SHOW_ERROR=1
-		printf "./push_swap ${ARG}\n" >> ${ERROR_FILE}
-	elif [ ${CHECKER_USE} == 1 ] && [ ! ${OUTPUT_CHECKER} == ${OUTPUT_CHECKER_MAC} ]; then
-		SHOW_ERROR=1
-		printf "./push_swap ${ARG}\n" >> ${ERROR_FILE}
 	fi
-	ARG="1 5 2 4 3"
-	if [ ${CHECKER_USE} == 1 ]; then
-		OUTPUT_CHECKER=$(${PUSH_SWAP} ${ARG} | ${CHECKER} ${ARG})
-	fi
-	OUTPUT_CHECKER_MAC=$(${PUSH_SWAP} ${ARG} | ${CHECKER_MAC} ${ARG})
-	if [ ${CHECKER_USE} == 0 ] && [ ${OUTPUT_CHECKER_MAC} == "KO" ]; then
+	checker_test "1 5 2 4 3" ${CHECKER_USE}
+	RES=$?
+	if [ ${SHOW_ERROR} == 0 ] && [ ! ${RES} == 0 ]; then
 		SHOW_ERROR=1
-		printf "./push_swap ${ARG}\n" >> ${ERROR_FILE}
-	elif [ ${CHECKER_USE} == 1 ] && [ ! ${OUTPUT_CHECKER} == ${OUTPUT_CHECKER_MAC} ]; then
-		SHOW_ERROR=1
-		printf "./push_swap ${ARG}\n" >> ${ERROR_FILE}
 	fi
-	ARG="-1 +5 -2 4 3"
-	if [ ${CHECKER_USE} == 1 ]; then
-		OUTPUT_CHECKER=$(${PUSH_SWAP} ${ARG} | ${CHECKER} ${ARG})
-	fi
-	OUTPUT_CHECKER_MAC=$(${PUSH_SWAP} ${ARG} | ${CHECKER_MAC} ${ARG})
-	if [ ${CHECKER_USE} == 0 ] && [ ${OUTPUT_CHECKER_MAC} == "KO" ]; then
+	checker_test "-1 +5 -2 4 3" ${CHECKER_USE}
+	RES=$?
+	if [ ${SHOW_ERROR} == 0 ] && [ ! ${RES} == 0 ]; then
 		SHOW_ERROR=1
-		printf "./push_swap ${ARG}\n" >> ${ERROR_FILE}
-	elif [ ${CHECKER_USE} == 1 ] && [ ! ${OUTPUT_CHECKER} == ${OUTPUT_CHECKER_MAC} ]; then
-		SHOW_ERROR=1
-		printf "./push_swap ${ARG}\n" >> ${ERROR_FILE}
 	fi
-	ARG="$(ruby -e "puts (-50..48).to_a.shuffle.join(' ')")"
-	if [ ${CHECKER_USE} == 1 ]; then
-		OUTPUT_CHECKER=$(${PUSH_SWAP} ${ARG} | ${CHECKER} ${ARG})
-	fi
-	OUTPUT_CHECKER_MAC=$(${PUSH_SWAP} ${ARG} | ${CHECKER_MAC} ${ARG})
-	if [ ${CHECKER_USE} == 0 ] && [ ${CHECKER_MAC} == "KO" ]; then
+	checker_test "$(ruby -e "puts (-50..48).to_a.shuffle.join(' ')")" ${CHECKER_USE}
+	RES=$?
+	if [ ${SHOW_ERROR} == 0 ] && [ ! ${RES} == 0 ]; then
 		SHOW_ERROR=1
-		printf "./push_swap ${ARG}\n" >> ${ERROR_FILE}
-	elif [ ${CHECKER_USE} == 1 ] && [ ! ${OUTPUT_CHECKER} == ${OUTPUT_CHECKER_MAC} ]; then
-		SHOW_ERROR=1
-		printf "./push_swap ${ARG}\n" >> ${ERROR_FILE}
 	fi
-	if [ ${SHOW_ERROR} == 1 ]; then
-		printf "${IRED}ERROR${NC}${RED}. There are some error with the checkers${NC}\n"
-		read -rp "Do you want to continue with the tests? [y/n] " ANSWER
-		if [ ${ANSWER} == 'n' ] || [ ${ANSWER} == 'N' ]; then
-			exit 0
-		fi
-	else
+
+	if [ ${SHOW_ERROR} == 0 ]; then
 		printf "${LGREEN}Checker	test passed successfully ✅${NC}\n"
 	fi
 }
@@ -298,11 +286,7 @@ output_validator()
 	fi
 
 	if [ ${SHOW_ERROR} == 1 ]; then
-		printf "${IRED}ERROR${NC}${RED}. The student prints something when the subject says not to${NC}\n"
-		read -rp "Do you want to continue with the tests? [y/n] " ANSWER
-		if [ ${ANSWER} == 'n' ] || [ ${ANSWER} == 'N' ]; then
-			exit 0
-		fi
+		printf "${RED}Output	test not passed. You print somethings when the subject say not ❌${NC}\n"
 	else
 		printf "${LGREEN}Output	test passed successfully ✅${NC}\n"
 	fi
@@ -311,42 +295,46 @@ output_validator()
 stderr_validator()
 {
 	SHOW_ERROR=0
-	OUTPUT=$(${PUSH_SWAP} a 2> /dev/null | wc -l)
+	PRINT_ERROR=0
+	OUTPUT=$(${PUSH_SWAP} a 2> ${FD_ERROR_FILE} | wc -l)
+	if [ ${OUTPUT} ] && [ ! ${OUTPUT} == 0 ]; then
+		SHOW_ERROR=1
+	fi
+	
+	OUTPUT=$(head -n 1 ${FD_ERROR_FILE})
+	if [ ${OUTPUT} ] && [ ! ${OUTPUT} == "Error" ]; then
+		PRINT_ERROR=1
+	fi
+
+	OUTPUT=$(${PUSH_SWAP} 1 1 2>> ${FD_ERROR_FILE} | wc -l)
 	if [ ! ${OUTPUT} == 0 ]; then
 		SHOW_ERROR=1
 	fi
 
-	OUTPUT=$(${PUSH_SWAP} 1 1 2> /dev/null | wc -l)
+	OUTPUT=$(${PUSH_SWAP} 1 -2147483649 2>> ${FD_ERROR_FILE} | wc -l)
 	if [ ! ${OUTPUT} == 0 ]; then
 		SHOW_ERROR=1
 	fi
 
-	OUTPUT=$(${PUSH_SWAP} 1 -2147483649 2> /dev/null | wc -l)
+	OUTPUT=$(${PUSH_SWAP} 1 +2147483648 2>> ${FD_ERROR_FILE} | wc -l)
 	if [ ! ${OUTPUT} == 0 ]; then
 		SHOW_ERROR=1
 	fi
 
-	OUTPUT=$(${PUSH_SWAP} 1 +2147483648 2> /dev/null | wc -l)
+	OUTPUT=$(${PUSH_SWAP} +-"1" 3 2>> ${FD_ERROR_FILE} | wc -l)
 	if [ ! ${OUTPUT} == 0 ]; then
 		SHOW_ERROR=1
 	fi
 
-	OUTPUT=$(${PUSH_SWAP} +-"1" 3 2> /dev/null | wc -l)
-	if [ ! ${OUTPUT} == 0 ]; then
-		SHOW_ERROR=1
-	fi
-
-	OUTPUT=$(${PUSH_SWAP} +-"1" 3 2> /dev/null | wc -l)
+	OUTPUT=$(${PUSH_SWAP} +-"1" 3 2>> ${FD_ERROR_FILE} | wc -l)
 	if [ ! ${OUTPUT} == 0 ]; then
 		SHOW_ERROR=1
 	fi
 
 	if [ ${SHOW_ERROR} == 1 ]; then
-		printf "${IRED}ERROR${NC}${RED}. The student does not print the error message on standard error${NC}\n"
-		read -rp "Do you want to continue with the tests? [y/n] " ANSWER
-		if [ ${ANSWER} == 'n' ] || [ ${ANSWER} == 'N' ]; then
-			exit 0
-		fi
+		printf "${RED}FD	test not passed. You print the error message in the stdout ❌${NC}\n"
+	elif [ ${PRINT_ERROR} == 1 ]; then
+		printf "${RED}FD	test not passed. You don't print \"Error\" as message ❌${NC}\n"
 	else
 		printf "${LGREEN}FD	test passed successfully ✅${NC}\n"
 	fi
@@ -360,31 +348,30 @@ makefile_checker()
 		printf "${RED}Error, Makefile not found. I can't compile the program\n${NC}"
 		exit 0
 	fi
+	OUTPUT=$(cat ${CURR_PATH}/../Makefile)
+	WALL=$(echo ${OUTPUT} | grep Wall | wc -l)
+	WEXTRA=$(echo ${OUTPUT} | grep Wextra | wc -l)
+	WERROR=$(echo ${OUTPUT} | grep Werror | wc -l)
+
+	if [ ${WALL} == 0 ] || [ ${WEXTRA} == 0 ] || [ ${WERROR} == 0 ]; then
+		printf "${RED}Make	test not passed. You don't compile with the flags ❌${NC}\n"
+	fi
+
 	make re -C ${CURR_PATH}/../ >> ${OUTPUT_FILE}
 	if [ ! -f ${CHECKER_MAC} ]; then
 		CHECKERP=0
-		curl -o checker_Mac https://projects.intra.42.fr/uploads/document/document/8245/checker_Mac 2> /dev/null
+		curl -o checker_Mac https://projects.intra.42.fr/uploads/document/document/8245/checker_Mac 2> ${FD_ERROR_FILE}
 		chmod +x ./checker_Mac
 		mv checker_Mac ../
 	fi
 	make clean -C ${CURR_PATH}/../ >> ${OUTPUT_FILE}
 	if [ ! -f ${PUSH_SWAP} ]; then
-		printf "${IRED}ERROR${NC}${RED}. push_swap not found. The 'clean' method also deletes the executable${NC}\n"
-		read -rp "Do you want to continue with the tests? [y/n] " ANSWER
-		if [ ${ANSWER} == 'n' ] || [ ${ANSWER} == 'N' ]; then
-			exit 0
-		else
-			RECOMPILE=1
-		fi
+		printf "${RED}Makefile	test not passed. The 'clean' method also deletes the executable ❌${NC}\n"
+		RECOMPILE=1
 	fi
 	if ([ ! -f ${CHECKER} ] && [ ! -f ${CHECKER_MAC} ]) && [ ${CHECKERP} == 1 ]; then
-		printf "${IRED}ERROR${NC}${RED}. checker not found. The 'clean' method also deletes the executable${NC}\n"
-		read -rp "Do you want to continue with the tests? [y/n] " ANSWER2
-		if [ ${ANSWER2} == 'n' ] || [ ${ANSWER2} == 'N' ]; then
-			exit 0
-		else
-			RECOMPILE=1
-		fi
+		printf "${RED}Makefile	test not passed. The 'clean' method also deletes the executable ❌${NC}\n"
+		RECOMPILE=1
 	fi
 	if [ ${RECOMPILE} == 1 ]; then
 		make re -C ${CURR_PATH}/../ >> ${OUTPUT_FILE}
@@ -402,6 +389,7 @@ end_test(){
 	make fclean -C ${CURR_PATH}/../ >> ${OUTPUT_FILE}
 	rm -rf ${CHECKER_MAC}
 	rm -rf ${OUTPUT_FILE}
+	rm -rf ${FD_ERROR_FILE}
 	exit
 }
 
@@ -427,7 +415,9 @@ norme()
 {
 	NORME=$(norminette ../ | grep Error: | wc -l)
 	if [ ! ${NORME} == 0 ]; then
-		printf "${IRED}Norme error${NC}\n"
+		printf "${RED}Norme	test not passed ❌${NC}\n"
+	else
+		printf "${LGREEN}Norme	test passed successfully ✅${NC}\n"
 	fi
 }
 
@@ -450,6 +440,9 @@ footer()
 
 single_compile()
 {
+	if [ -f ${ERROR_FILE} ]; then
+			rm -rf ${ERROR_FILE}
+	fi
 	if [ ! -f ${CURR_PATH}/../Makefile ]; then
 		printf "${RED}Error, Makefile not found. I can't compile the program\n${NC}"
 	fi

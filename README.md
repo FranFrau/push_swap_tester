@@ -39,6 +39,35 @@ sh tester.sh 500 default <ntest>
 ```
 `<nmoves>` is the moves limits counter\
 `<ntest>` is the total of test that it made
+
+# Images
+<table>
+	<tr>
+		<td>
+			<img src="https://i.imgur.com/utOf7D0.png" width="300" height=""></img>
+		</td>
+		<td>
+			<img src="https://i.imgur.com/4Xih5EL.png" width="300" height=""></img>
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<img src="https://i.imgur.com/cRz8Tq1.png" width="300" height=""></img>
+		</td>
+		<td>
+			<img src="https://i.imgur.com/FvzyUF2.png" width="300" height=""></img>
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<img src="https://i.imgur.com/NkZPZm1.png" width="300" height=""></img>
+		</td>
+		<td>
+			<img src="https://i.imgur.com/F9fCd6m.png" width="300" height=""></img>
+		</td>
+	</tr>
+</table>
+
 # `WARNING`
 This script is made by me and frudello. See if and where it fails, understand what the testers tell's you.\
 <a href="https://github.com/frudello">frudello</a>
