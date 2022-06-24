@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    tester.sh                                          :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: ffrau <ffrau@student.42.fr>                +#+  +:+       +#+         #
+#    By: ffrau <ffrau@student.42roma.it>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2022/06/11 19:52:02 by ffrau             #+#    #+#              #
-#    Updated: 2022/06/18 13:37:07 by ffrau            ###   ########.fr        #
+#    Updated: 2022/06/25 01:16:54 by ffrau            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -15,14 +15,19 @@ BLACK="\033[30m"
 RED="\033[31m"
 LGREEN="\033[32m"
 YELLOW="\033[33m"
+BLUE="\033[34m"
+CYAN="\033[36m"
 NC="\033[0m"
 CURR_PATH=$(pwd)
 PUSH_SWAP="${CURR_PATH}/../push_swap"
 CHECKER="${CURR_PATH}/../checker"
-CHECKER_MAC="${CURR_PATH}/../checker_Mac"
+CHECKER_INTRA="${CURR_PATH}/../checker_intra"
 ERROR_FILE="errors.txt"
 FD_ERROR_FILE="fd_errors.txt"
 OUTPUT_FILE="output.txt"
+OUT_FILE=".out"
+AVERAGE_ONEH=0
+AVERAGE_FIVEH=0
 
 print_message()
 {
@@ -135,22 +140,26 @@ five_number(){
 	print_message 5 ${COUNTER} 120 ${AVERAGE} ${MIN} ${MAX} 12
 }
 
-one_hundred(){
+number_test(){
+	# nb || tests || mv
 	COUNTER=0
 	AVERAGE=0
-	MOVES=$1
+	NUMBER=$1
 	TESTS=$2
+	MOVES=$3
+	TMIN=$(((${NUMBER} / 2) * -1))
+	TMAX=$(((${NUMBER} / 2) - 2))
 	MIN=999999999999
 	MAX=-999999999999
-	if [ ! $1 ] || [ $1 == "default" ]; then
-		MOVES=700
+	if [ ! $1 ] ; then
+		MOVES=1000
 	fi
 	if [ ! $2 ]; then
 		TESTS=100
 	fi
 	for (( i=0; i<${TESTS}; i++ ))
 	do
-		SEQUENCE="$(ruby -e "puts (-50..48).to_a.shuffle.join(' ')")"
+		SEQUENCE="$(ruby -e "puts (${TMIN}..${TMAX}).to_a.shuffle.join(' ')")"
 		RESULT=$(${PUSH_SWAP} ${SEQUENCE} | wc -l)
 		if [ ${RESULT} -le ${MIN} ]; then
 			MIN=${RESULT}
@@ -166,41 +175,16 @@ one_hundred(){
 			printf "Moves: ${RED}${RESULT}${NC}\n" >> ${ERROR_FILE}
 		fi
 	done
-	print_message 100 ${COUNTER} ${TESTS} ${AVERAGE} ${MIN} ${MAX} ${MOVES}
-}
-
-five_hundred(){
-	COUNTER=0
-	AVERAGE=0
-	MOVES=$1
-	TESTS=$2
-	MIN=999999999999
-	MAX=-999999999999
-	if [ ! $1 ] || [ $1 == "default" ]; then
-		MOVES=5500
+	if [ ${NUMBER} == 100 ] && [ ${COUNTER} -ge $(((${TESTS} / 4) * 3)) ]; then
+		AVERAGE_ONEH=$((${AVERAGE} / ${TESTS}))
+	elif [ ${NUMBER} == 500 ] && [ ${COUNTER} -ge $(((${TESTS} / 4) * 3)) ]; then
+		AVERAGE_FIVEH=$((${AVERAGE} / ${TESTS}))
+	elif [ ${NUMBER} == 100 ]; then
+		AVERAGE_ONEH=${MAX}
+	elif [ ${NUMBER} == 500 ]; then
+		AVERAGE_FIVEH=${MAX}
 	fi
-	if [ ! $2 ]; then
-		TESTS=100
-	fi
-	for (( i=0; i<${TESTS}; i++ ))
-	do
-		SEQUENCE="$(ruby -e "puts (-249..250).to_a.shuffle.join(' ')")"
-		RESULT=$(${PUSH_SWAP} ${SEQUENCE} | wc -l)
-		if [ ${RESULT} -le ${MIN} ]; then
-			MIN=${RESULT}
-		fi
-		if [ ${RESULT} -ge ${MAX} ]; then
-			MAX=${RESULT}
-		fi
-		AVERAGE=$((AVERAGE + RESULT))
-		if [ ${RESULT} -le ${MOVES} ]; then
-			COUNTER=$((COUNTER +1))
-		else
-			echo "'./push_swap ${SEQUENCE}'" >> ${ERROR_FILE}
-			printf "Moves: ${RED}${RESULT}${NC}\n" >> ${ERROR_FILE}
-		fi
-	done
-	print_message 500 ${COUNTER} ${TESTS} ${AVERAGE} ${MIN} ${MAX} ${MOVES}
+	print_message ${NUMBER} ${COUNTER} ${TESTS} ${AVERAGE} ${MIN} ${MAX} ${MOVES}
 }
 
 showerrors(){
@@ -218,12 +202,12 @@ checker_test()
 	if [ $2 == 1 ]; then
 		OUTPUT_CHECKER=$(${PUSH_SWAP} $1 2> ${FD_ERROR_FILE} | ${CHECKER} $1 2> ${FD_ERROR_FILE})
 	fi
-	OUTPUT_CHECKER_MAC=$(${PUSH_SWAP} $1 2> ${FD_ERROR_FILE} | ${CHECKER_MAC} $1)
-	if [ $2 == 0 ] && [ ${OUTPUT_CHECKER_MAC} == "KO" ]; then
+	OUTPUT_CHECKER_INTRA=$(${PUSH_SWAP} $1 2> ${FD_ERROR_FILE} | ${CHECKER_INTRA} $1)
+	if [ $2 == 0 ] && [ ${OUTPUT_CHECKER_INTRA} == "KO" ]; then
 		printf "${RED}Checker	test. Error with $1 ❌${NC}\n"
 		printf "./push_swap $1\n" >> ${ERROR_FILE}
 		return 1
-	elif [ $2 == 1 ] && [ ! ${OUTPUT_CHECKER} == ${OUTPUT_CHECKER_MAC} ]; then
+	elif [ $2 == 1 ] && [ ! ${OUTPUT_CHECKER} == ${OUTPUT_CHECKER_INTRA} ]; then
 		printf "${RED}Checker	test. Intra checker and your checker output are differents. Error with $1 ❌${NC}\n"
 		printf "./push_swap $1\n" >> ${ERROR_FILE}
 		return 1
@@ -236,7 +220,7 @@ stresstests()
 	SHOW_ERROR=0
 	CHECKER_USE=0
 	OUTPUT_CHECKER=""
-	OUTPUT_CHECKER_MAC=""
+	OUTPUT_CHECKER_INTRA=""
 	if [ -f ${CHECKER} ]; then
 		CHECKER_USE=1
 	fi
@@ -340,37 +324,71 @@ stderr_validator()
 	fi
 }
 
-makefile_checker()
+intra_checker_download()
 {
-	CHECKERP=1
-	RECOMPILE=0
-	if [ ! -f ${CURR_PATH}/../Makefile ]; then
-		printf "${RED}Error, Makefile not found. I can't compile the program\n${NC}"
-		exit 0
+	printf "${BLUE}Downloading checker from intranet...${NC}\n"
+	$(cat /etc/os-release 2> .out)
+	IS_MAC=$(cat .out | grep 'No such file or directory' | wc -l)
+	if [ ${IS_MAC}  == 1 ]; then
+		curl -o checker_intra https://projects.intra.42.fr/uploads/document/document/8245/checker_Mac 2> ${FD_ERROR_FILE}
+		chmod +x ./checker_intra
+		mv checker_intra ../
+	else
+		curl -o checker_intra https://projects.intra.42.fr/uploads/document/document/8246/checker_linux 2> ${FD_ERROR_FILE}
+		chmod +x ./checker_intra
+		mv checker_intra ../
 	fi
+}
+
+valid_makefile()
+{
+	printf "${BLUE}Checking the flags...${NC}\n"
 	OUTPUT=$(cat ${CURR_PATH}/../Makefile)
 	WALL=$(echo ${OUTPUT} | grep Wall | wc -l)
 	WEXTRA=$(echo ${OUTPUT} | grep Wextra | wc -l)
 	WERROR=$(echo ${OUTPUT} | grep Werror | wc -l)
-
 	if [ ${WALL} == 0 ] || [ ${WEXTRA} == 0 ] || [ ${WERROR} == 0 ]; then
 		printf "${RED}Make	test not passed. You don't compile with the flags ❌${NC}\n"
 	fi
-
-	make re -C ${CURR_PATH}/../ >> ${OUTPUT_FILE}
-	if [ ! -f ${CHECKER_MAC} ]; then
-		CHECKERP=0
-		curl -o checker_Mac https://projects.intra.42.fr/uploads/document/document/8245/checker_Mac 2> ${FD_ERROR_FILE}
-		chmod +x ./checker_Mac
-		mv checker_Mac ../
+	ALL=$(echo ${OUTPUT} | grep all | wc -l)
+	CLEAN=$(echo ${OUTPUT} | grep clean | wc -l)
+	FCLEAN=$(echo ${OUTPUT} | grep fclean | wc -l)
+	RE=$(echo ${OUTPUT} | grep re | wc -l)
+	PUSH_S=$(echo ${OUTPUT} | grep push_swap | wc -l)
+	BONUS=$(echo ${OUTPUT} | grep bonus | wc -l)
+	if [ ${ALL} == 0 ] || [ ${CLEAN} == 0 ] || [ ${FCLEAN} == 0 ] || [ ${RE} == 0 ] || [ ${PUSH_S} == 0 ] || [ ${BONUS} == 0 ];
+	then
+		printf "${RED}Make	test not passed. Missing operator between:
+[all | clean | fclean | re | push_swap | bonus]
+or wrong .PHONY ❌${NC}\n"
 	fi
+}
+
+makefile_checker()
+{
+	CHECKERP=1
+	RECOMPILE=0
+	printf "${BLUE}Checking makefile...${NC}\n"
+	if [ ! -f ${CURR_PATH}/../Makefile ]; then
+		printf "${RED}Error, Makefile not found. I can't compile the program ❌\n${NC}"
+		exit 0
+	fi
+	
+	valid_makefile
+	intra_checker_download
+	printf "${BLUE}Compiling the program...${NC}\n"
+	make re -C ${CURR_PATH}/../ >> ${OUTPUT_FILE}
+	if [ ! -f ${CHECKER} ]; then
+		CHECKERP=0
+	fi
+
 	make clean -C ${CURR_PATH}/../ >> ${OUTPUT_FILE}
 	if [ ! -f ${PUSH_SWAP} ]; then
-		printf "${RED}Makefile	test not passed. The 'clean' method also deletes the executable ❌${NC}\n"
+		printf "${RED}Makefile	test not passed. The 'clean' method also deletes 'push_swap' executable ❌${NC}\n"
 		RECOMPILE=1
 	fi
-	if ([ ! -f ${CHECKER} ] && [ ! -f ${CHECKER_MAC} ]) && [ ${CHECKERP} == 1 ]; then
-		printf "${RED}Makefile	test not passed. The 'clean' method also deletes the executable ❌${NC}\n"
+	if ([ ! -f ${CHECKER} ] && [ ! -f ${CHECKER_INTRA} ]) && [ ${CHECKERP} == 1 ]; then
+		printf "${RED}Makefile	test not passed. The 'clean' method also deletes 'checker' executable ❌${NC}\n"
 		RECOMPILE=1
 	fi
 	if [ ${RECOMPILE} == 1 ]; then
@@ -387,8 +405,9 @@ press_any_key(){
 end_test(){
 	press_any_key
 	make fclean -C ${CURR_PATH}/../ >> ${OUTPUT_FILE}
-	rm -rf ${CHECKER_MAC}
+	rm -rf ${CHECKER_INTRA}
 	rm -rf ${OUTPUT_FILE}
+	rm -rf ${OUT_FILE}
 	rm -rf ${FD_ERROR_FILE}
 	exit
 }
@@ -450,6 +469,48 @@ single_compile()
 	rm -rf ${OUTPUT_FILE}
 }
 
+clear()
+{
+	press_any_key
+	make fclean -C ${CURR_PATH}/../ >> ${OUTPUT_FILE}
+	rm -rf ${CHECKER_INTRA}
+	rm -rf ${OUTPUT_FILE}
+	rm -rf ${FD_ERROR_FILE}
+	rm -rf ${ERROR_FILE}
+	rm -rf ${CURR_PATH}
+	rm -rf ${OUT_FILE}
+}
+
+starts_value()
+{
+	# echo "$1 || $2 || $3 || $4 || $5 || $6 || $7"
+	# echo "nb || ct || 1☆ || 2☆ || 3☆ || 4☆ || 5☆" 
+	printf "$1 average: "
+	if [ $2 -le $3 ]; then
+		echo "${YELLOW}★★★★★ ${NC}"
+	elif [ $2 -le $4 ]; then
+		echo "${YELLOW}★★★★ ${NC}"
+	elif [ $2 -le $5 ]; then
+		echo "${YELLOW}★★★ ${NC}"
+	elif [ $2 -le $6 ]; then
+		echo "${YELLOW}★★ ${NC}"
+	elif [ $2 -le $7 ]; then
+		echo "${YELLOW}★ ${NC}"
+	else
+		echo "${RED} Zero stars :c ${NC}"
+	fi
+}
+
+print_starts()
+{
+	if [ ! ${AVERAGE_ONEH} == 0 ]; then
+		starts_value 100 ${AVERAGE_ONEH} 700 900 1100 1300 1500
+	fi
+	if [ ! ${AVERAGE_FIVEH} == 0 ]; then
+		starts_value 500 ${AVERAGE_FIVEH} 5500 7000 8500 10000 115000
+	fi
+}
+
 valid_params()
 {
 	if [ ! $1 ]; then
@@ -464,9 +525,10 @@ valid_params()
 		header
 		three_number
 		five_number
-		one_hundred
-		five_hundred
+		number_test 100 100 700
+		number_test 500 100 5500
 		footer
+		print_starts
 	else
 		case $1 in
 			"makefile")
@@ -495,15 +557,17 @@ valid_params()
 			"100")
 				single_compile
 				header
-				one_hundred $2 $3
+				number_test 100 $2 $3
 				footer
+				print_starts
 				end_test
 				;;
 			"500")
 				single_compile
 				header
-				five_hundred $2 $3
+				number_test 500 $2 $3
 				footer
+				print_starts
 				end_test
 				;;
 			"list")
@@ -511,8 +575,7 @@ valid_params()
 				exit
 				;;
 			"clear")
-				end_test
-				rm -rf ./
+				clear
 				exit
 				;;
 			"showerrors")

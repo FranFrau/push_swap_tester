@@ -34,8 +34,8 @@ sh tester.sh 3
 ```
 You can also edit some paramether on 100 and 500 moves:
 ```sh
-sh tester.sh 100 <nmoves> <ntest>
-sh tester.sh 500 default <ntest>
+sh tester.sh 100 <ntest> <nmoves>
+sh tester.sh 500 <ntest> <nmoves>
 ```
 `<nmoves>` is the moves limits counter\
 `<ntest>` is the total of test that it made
